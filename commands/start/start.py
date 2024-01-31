@@ -55,7 +55,7 @@ pro_commands_button = InlineKeyboardButton("⛓ Pro Commands ⛓", callback_data
 settings_button = InlineKeyboardButton("⚙️ Bot Settings ⚙️", callback_data="bot_settings")
 permission_button = InlineKeyboardButton("🛡 Group Permissions 🛡", callback_data="permission_settings")
 enable_buy_alert = InlineKeyboardButton("🟤 Enable Buy Alerts", callback_data="enable_buy_alert")
-enable_subscription = InlineKeyboardButton("🟤 Enable Subscription", callback_data="enable_subscription")
+# enable_subscription = InlineKeyboardButton("🟤 Enable Subscription", callback_data="enable_subscription")
 rules_button = InlineKeyboardButton("📘 Rules 📘", callback_data="rules")
 
 support_button = InlineKeyboardButton("📩 Contact Support 📩", url="https://t.me/darkkccodes")
@@ -67,7 +67,7 @@ def formatted_button(user, subscription):
         [add_button],
         [trade_button],
         [support_button, website_button],
-        [enable_subscription],
+        # [enable_subscription],
         [enable_buy_alert],
         [settings_button, permission_button],
         [language_button]
@@ -232,7 +232,7 @@ async def choose_language_command(update: Update, context: ContextTypes.DEFAULT_
             [add_button],
             [trade_button],
             [support_button, website_button],
-            [enable_subscription],
+            # [enable_subscription],
             [enable_buy_alert],
             [settings_button, permission_button],
             [language_button]
