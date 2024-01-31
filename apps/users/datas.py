@@ -1,7 +1,5 @@
 import os
 import django
-from apps.subscription.datas import get_subscription_tier
-from apps.subscription.models import SubscriptionTier, UserSubscription
 from utils.web3 import Web3Functions
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
@@ -22,6 +20,7 @@ from .models import (
     User,
 )
 from apps.tokens.models import Tokens
+from apps.subscription.models import UserSubscription
 
 
 @sync_to_async

@@ -2,7 +2,6 @@ import os
 from pprint import pprint
 import django
 
-from apps.subscription.datas import get_subscription_tier, get_subscription_tiers
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 django.setup()
@@ -33,6 +32,7 @@ from utils.utils import GroupBotActions, get_message_stack, return_message
 
 
 from apps.users.datas import create_captcah, create_group, create_user, get_captcah, get_group, get_groups, get_user, get_user_by_username, update_group, update_user, update_user_group
+# from apps.subscription.datas import get_subscription_tier, get_subscription_tiers
 
 home_button = InlineKeyboardButton("🏠 Home 🏠", callback_data="home")
 add_button = InlineKeyboardButton("➕ Add Modoraka to Group ➕", url="https://t.me/modoraka_bot?startgroup=start")
@@ -918,75 +918,75 @@ async def intervention_command(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 
-async def enable_subscription_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    bot = context.bot
-    chat_id = update.effective_chat.id if update.message else update.callback_query.message.chat.id
-    message = update.message if update.message else update.callback_query.message
-    message_id = message.message_id
-    user_id = update.message.from_user.id if update.message else update.callback_query.from_user.id
-    message_type = update.message.chat.type if update.message else update.callback_query.message.chat.type
-    is_group = message_type in ("group", "supergroup", "channel")
+# async def enable_subscription_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     bot = context.bot
+#     chat_id = update.effective_chat.id if update.message else update.callback_query.message.chat.id
+#     message = update.message if update.message else update.callback_query.message
+#     message_id = message.message_id
+#     user_id = update.message.from_user.id if update.message else update.callback_query.from_user.id
+#     message_type = update.message.chat.type if update.message else update.callback_query.message.chat.type
+#     is_group = message_type in ("group", "supergroup", "channel")
 
-    tiers = await get_subscription_tiers()
+#     # tiers = await get_subscription_tiers()
 
-    if not is_group:
-        markup = [
-            [home_button],
-            [add_button],
-            # [trade_button],
-            # [support_button, website_button],
-        ]
-        for tier in tiers:
-            markup.append([InlineKeyboardButton(f"{tier['name'].title()} - {tier['price']} USDT", callback_data=f"group_{tier['id']}")])
+#     if not is_group:
+#         markup = [
+#             [home_button],
+#             [add_button],
+#             # [trade_button],
+#             # [support_button, website_button],
+#         ]
+#         # for tier in tiers:
+#         #     markup.append([InlineKeyboardButton(f"{tier['name'].title()} - {tier['price']} USDT", callback_data=f"group_{tier['id']}")])
 
-        # Build the reply markup
-        keyboard = InlineKeyboardMarkup(markup)
+#         # Build the reply markup
+#         keyboard = InlineKeyboardMarkup(markup)
 
-        try:
-            await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-            await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text="Select a tier to subscribe to", reply_markup=keyboard, parse_mode=ParseMode.HTML)
-        except:
-            await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-            await bot.delete_message(chat_id=chat_id, message_id=message_id)
-            await bot.send_message(chat_id=chat_id, text="Select a tier to subscribe to", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+#         try:
+#             await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+#             await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text="Select a tier to subscribe to", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+#         except:
+#             await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+#             await bot.delete_message(chat_id=chat_id, message_id=message_id)
+#             await bot.send_message(chat_id=chat_id, text="Select a tier to subscribe to", reply_markup=keyboard, parse_mode=ParseMode.HTML)
 
 
-async def choose_plan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    bot = context.bot
-    user = update.message.from_user if update.message else update.callback_query.from_user
-    user_id = user.id
-    chat_id = update.effective_chat.id if update.message else update.callback_query.message.chat.id
-    message_id = update.message.id if update.message else update.callback_query.message.id
-    message_type = update.message.chat.type if update.message else update.callback_query.message.chat.type
+# async def choose_plan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     query = update.callback_query
+#     await query.answer()
+#     bot = context.bot
+#     user = update.message.from_user if update.message else update.callback_query.from_user
+#     user_id = user.id
+#     chat_id = update.effective_chat.id if update.message else update.callback_query.message.chat.id
+#     message_id = update.message.id if update.message else update.callback_query.message.id
+#     message_type = update.message.chat.type if update.message else update.callback_query.message.chat.type
 
-    sub_id = query.data[len("choose_"):] #context.user_data.get('editing_group_chat_id')
-    LOGGER.info(sub_id)
+#     sub_id = query.data[len("choose_"):] #context.user_data.get('editing_group_chat_id')
+#     LOGGER.info(sub_id)
 
-    is_group = message_type in ("group", "supergroup", "channel")
+#     is_group = message_type in ("group", "supergroup", "channel")
 
-    sub = await get_subscription_tier(sub_id)
+#     # sub = await get_subscription_tier(sub_id)
 
-    if not is_group:
-        groups = await get_groups(user_id)
+#     if not is_group:
+#         groups = await get_groups(user_id)
 
-        markup = [
-            [back_button],
-        ]
+#         markup = [
+#             [back_button],
+#         ]
 
-        for group in groups:
-            markup.append([InlineKeyboardButton(f"{'💚' if group['subscribed'] else '💓'} {group['group_name'].title()}", callback_data=f"group_{group['chat_id']}")])
+#         for group in groups:
+#             markup.append([InlineKeyboardButton(f"{'💚' if group['subscribed'] else '💓'} {group['group_name'].title()}", callback_data=f"group_{group['chat_id']}")])
 
-        keyboard = InlineKeyboardMarkup(
-            markup
-        )
+#         keyboard = InlineKeyboardMarkup(
+#             markup
+#         )
 
-        # Fetch the bot's profile photo
-        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        try:
-            await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=f"Select {sub['features']}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
-        except:
-            await bot.send_message(chat_id=chat_id, text=f"New language choice set to: <strong>{language.title()}</strong>", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+#         # Fetch the bot's profile photo
+#         await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+#         try:
+#             await bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=f"Select {sub['features']}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+#         except:
+#             await bot.send_message(chat_id=chat_id, text=f"New language choice set to: <strong>{language.title()}</strong>", reply_markup=keyboard, parse_mode=ParseMode.HTML)
 
 

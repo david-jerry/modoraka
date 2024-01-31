@@ -24,7 +24,7 @@ from commands.start.start import (
     ban_user_command,
     choose_language_command,
     delete_rules_command,
-    enable_subscription_command,
+    # enable_subscription_command,
     help_command,
     intervention_command,
     language_command,
@@ -340,7 +340,7 @@ def main() -> None:
     app.add_handler(CallbackQueryHandler(start_command, pattern=r"^home$"))
     app.add_handler(CallbackQueryHandler(back_command, pattern=r"^back$"))
     app.add_handler(CallbackQueryHandler(cancel_command, pattern=r"^cancel$"))
-    app.add_handler(CallbackQueryHandler(enable_subscription_command, pattern=r"^enable_subscription$"))
+    # app.add_handler(CallbackQueryHandler(enable_subscription_command, pattern=r"^enable_subscription$"))
     app.add_handler(CallbackQueryHandler(help_command, pattern=r"^help$"))
     app.add_handler(CallbackQueryHandler(language_command, pattern=r"^choose_language$"))
     app.add_handler(CallbackQueryHandler(rules_command, pattern=r"^rules$"))
