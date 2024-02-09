@@ -11,8 +11,10 @@ from django.utils.timezone import datetime, timedelta
 from asgiref.sync import sync_to_async
 
 from .models import (
+    BannedWords,
     GroupOffenders,
     GroupPinnedMessages,
+    LinksException,
     TelegramGroup,
     TelegramGroupCaptcha,
     TelegramGroupFlooding,
@@ -22,6 +24,43 @@ from .models import (
 from apps.tokens.models import Tokens
 from apps.subscription.models import UserSubscription
 
+@sync_to_async
+def get_banned_words(chat_id):
+    BannedWords.objects.get_or_create(chat_id=chat_id, defaults={'words':'scammer, scam'})
+    group = BannedWords.objects.get(chat_id=chat_id)
+    LOGGER.info(f"Banned WOrds: {group.words}")
+    words_dict = {"words": group.words}
+    return words_dict
+
+@sync_to_async
+def update_banned_words(chat_id, text):
+    text_list = text
+    BannedWords.objects.get_or_create(chat_id=chat_id, defaults={'words':'scammer, scam'})
+    group = BannedWords.objects.get(chat_id=chat_id)
+    LOGGER.info(f"Banned WOrds: {group.words}")
+    group.words += f", {text_list}"
+    group.save()
+    words_dict = {"words": group.words}
+    return words_dict
+
+@sync_to_async
+def get_exception_links(chat_id):
+    LinksException.objects.get_or_create(chat_id=chat_id, defaults={'links':'https://coraka.com'})
+    group = LinksException.objects.get(chat_id=chat_id)
+    LOGGER.info(f"Exceptional Links: {group.links}")
+    words_dict = {"links": group.links}
+    return words_dict
+
+@sync_to_async
+def update_exception_links(chat_id, text):
+    text_list = text
+    LinksException.objects.get_or_create(chat_id=chat_id, defaults={'links':'https://coraka.com'})
+    group = LinksException.objects.get(chat_id=chat_id)
+    LOGGER.info(f"Exceptional Links: {group.links}")
+    group.links += f", {text_list}"
+    group.save()
+    words_dict = {"links": group.links}
+    return words_dict
 
 @sync_to_async
 def get_users():
@@ -140,6 +179,18 @@ def update_user(user_id, data):
 
 
 @sync_to_async
+def view_user_groups(user_id):
+    try:
+        user = User.objects.get(user_id=user_id)
+        # user.save(update_fields=["groups"])
+        user_groups = {
+            "groups": [{"chat_id": group.chat_id, "name": group.group_name} for group in user.groups.all()],
+        }
+        return user_groups
+    except User.DoesNotExist:
+        return None
+
+@sync_to_async
 def update_user_group(user_id, group_id):
     try:
         user = User.objects.get(user_id=user_id)
@@ -203,6 +254,10 @@ def get_groups(user_id):
             "unverified_user_duration": group.unverified_user_duration,
             "watch_length": group.watch_length,
             "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
             "prevent_flooding": group.prevent_flooding,
             "delete_messages": group.delete_messages,
             "subscribed": group.subscribed,
@@ -251,6 +306,10 @@ def get_group(chat_id):
             "enable_captcha": group.enable_captcha,
             "watch_length": group.watch_length,
             "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
             "prevent_flooding": group.prevent_flooding,
             "subscribed": group.subscribed,
             "delete_messages": group.delete_messages,
@@ -308,6 +367,10 @@ def create_group(data):
             "must_have_username": group.must_have_username,
             "block_porn": group.block_porn,
             "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
             "unverified_user_duration": group.unverified_user_duration,
             "enable_captcha": group.enable_captcha,
             "watch_for_spam": group.watch_for_spam,
@@ -359,9 +422,7 @@ def update_group(chat_id, data):
                 "token_abi": group.buy_token_name.token_abi,
                 "token_router_address": group.buy_token_name.token_router_address,
                 "token_router_abi": group.buy_token_name.token_router_abi,
-            }
-            if group.buy_token_name
-            else None,
+            } if group.buy_token_name else None,
             "allow_links": group.allow_links,
             "must_have_username": group.must_have_username,
             "block_porn": group.block_porn,
@@ -370,6 +431,10 @@ def update_group(chat_id, data):
             "watch_length": group.watch_length,
             "enable_captcha": group.enable_captcha,
             "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
             "prevent_flooding": group.prevent_flooding,
             "subscribed": group.subscribed,
             "delete_messages": group.delete_messages,
@@ -419,6 +484,10 @@ def update_group_watch_token(chat_id, token_symbol):
             "block_porn": group.block_porn,
             "enable_captcha": group.enable_captcha,
             "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
             "unverified_user_duration": group.unverified_user_duration,
             "watch_for_spam": group.watch_for_spam,
             "watch_length": group.watch_length,
@@ -442,7 +511,7 @@ def reset_group_offenders(chat_id, user_id):
     offender.end_date = None
 
     offender.save()
-    group.offender.pop(user_id)
+    group.offender = [user for user in group.offenders if user != user_id]
 
     action_dict = {
         "group": {"chat_id": offender.group.chat_id, "group_name": offender.group.group_name},
@@ -467,7 +536,8 @@ def add_group_offenders(chat_id, user_id):
         offender.start_date = datetime.now()
         offender.end_date = datetime.now() + timedelta(days=group.ban_duration)
         offender.save(update_fields=["start_date", "end_date"])
-        group.offenders.append(user_id)
+        group.offenders += f", {user_id}"
+        group.save()
         # group.save(update_fields=['offenders'])
 
     group_dict = {
@@ -502,6 +572,10 @@ def add_group_offenders(chat_id, user_id):
         "block_porn": group.block_porn,
         "enable_captcha": group.enable_captcha,
         "allow_hash": group.allow_hash,
+            "must_have_username": group.must_have_username,
+            "must_have_about": group.must_have_about,
+            "must_have_description": group.must_have_description,
+            "allow_mention": group.allow_mention,
         "watch_for_spam": group.watch_for_spam,
         "watch_length": group.watch_length,
         "unverified_user_duration": group.unverified_user_duration,
@@ -565,7 +639,28 @@ def add_flood_settings(chat_id):
         action_dict = {
             "group": {
                 "chat_id": media_actions.group.chat_id,
-                "subscribed": media_actions.group.subscribed,
+                "group_name": media_actions.group.group_name,
+            },
+            "messages_before_block": media_actions.messages_before_block,
+            "repeats_timeframe": media_actions.repeats_timeframe,
+            "ban": media_actions.ban,
+            "kick": media_actions.kick,
+            "mute": media_actions.mute,
+        }
+        return action_dict
+    except Exception as e:
+        LOGGER.info(f"Flood Settings Error: {str(e)}")
+        return None
+
+@sync_to_async
+def get_flood_settings(chat_id):
+    try:
+        group = TelegramGroup.objects.get(chat_id=chat_id)
+        TelegramGroupFlooding.objects.get_or_create(group=group, defaults={"group": group})
+        media_actions = TelegramGroupFlooding.objects.get(group=group)
+        action_dict = {
+            "group": {
+                "chat_id": media_actions.group.chat_id,
                 "group_name": media_actions.group.group_name,
             },
             "messages_before_block": media_actions.messages_before_block,
@@ -593,7 +688,7 @@ def update_flood_settings(chat_id, data):
     action_dict = {
         "group": {
             "chat_id": media_actions.group.chat_id,
-            "subscribed": media_actions.group.subscribed,
+
             "group_name": media_actions.group.group_name,
         },
         "messages_before_block": media_actions.messages_before_block,
@@ -609,19 +704,18 @@ def update_flood_settings(chat_id, data):
 def create_captcah(chat_id, user_id, captcha_code):
     group = TelegramGroup.objects.get(chat_id=chat_id)
     timestamp = datetime.now() + timedelta(days=group.unverified_user_duration)
-    data = {"group": group, "user_id": user_id, "captcha_code": captcha_code, "expires": timestamp, "used": False}
-    TelegramGroupCaptcha.objects.update_or_create(group=group, defaults=data)
+    data = {"group": chat_id, "user_id": user_id, "captcha_code": captcha_code, "expires": timestamp, "used": False}
+    TelegramGroupCaptcha.objects.update_or_create(group=chat_id, defaults=data)
     return data
 
 
 @sync_to_async
 def get_captcah(chat_id, user_id):
     try:
-        group = TelegramGroup.objects.get(chat_id=chat_id)
-        captcha = TelegramGroupCaptcha.objects.get(group=group, user_id=user_id)
+        captcha = TelegramGroupCaptcha.objects.get(group=chat_id, user_id=user_id)
         data = {
-            "group": captcha.group.chat_id,
-            "user_id": captcha.user_id,
+            "group": chat_id,
+            "user_id": user_id,
             "captcha_code": captcha.captcha_code,
             "expires": captcha.expires,
             "used": captcha.used,
@@ -644,8 +738,8 @@ def verify_captcah(chat_id, user_id, captcha_code):
         captcha.save(update_fields=["used"])
 
     data = {
-        "group": captcha.group,
-        "user_id": captcha.user_id,
+        "group": chat_id,
+        "user_id": user_id,
         "captcha_code": captcha.captcha_code,
         "expires": captcha.expires,
         "used": captcha.used,

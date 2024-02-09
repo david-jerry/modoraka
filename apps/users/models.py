@@ -21,6 +21,19 @@ from apps.tokens.models import Tokens
 from utils.custom_fields import ListField
 
 
+class BannedWords(TimeStampedModel):
+    chat_id = CharField(_("Group ID"), max_length=15, blank=False, unique=True, null=True)
+    words = ListField()
+
+    def __str__(self):
+        return f"Banned Words for {self.chat_id}"
+
+class LinksException(TimeStampedModel):
+    chat_id = CharField(_("Group ID"), max_length=15, blank=False, unique=True, null=True)
+    links = ListField()
+
+    def __str__(self):
+        return f"Exceptional Links {self.chat_id}"
 
 class TelegramGroup(TimeStampedModel):
     chat_id = CharField(_("Group ID"), max_length=15, blank=False, unique=True, null=True)
@@ -30,29 +43,32 @@ class TelegramGroup(TimeStampedModel):
     about = TextField(blank=True, null=True)
     welcome_message = TextField(blank=True, null=True)
     goodbye_message = TextField(blank=True, null=True)
+    website = URLField(null=True)
+    support = URLField(null=True)
 
     max_warnings = IntegerField(default=3)
     mute_duration = IntegerField(default=1) # in minutes
     ban_duration = IntegerField(default=7) # in days
     max_message_length = IntegerField(default=300)
+    delete_messages = BooleanField(default=True)
 
-    website = URLField(null=True)
-    support = URLField(null=True)
 
     but_token_link = URLField(null=True)
     buy_token_name = ForeignKey(Tokens, on_delete=CASCADE, null=True, related_name="buy_token_name")
 
     allow_links = BooleanField(default=False)
     must_have_username = BooleanField(default=True)
+    must_have_about = BooleanField(default=True)
+    must_have_description = BooleanField(default=True)
 
     block_porn = BooleanField(default=True)
     allow_hash = BooleanField(default=False)
+    allow_mention = BooleanField(default=False)
     enable_captcha = BooleanField(default=False)
     unverified_user_duration = IntegerField(default=7)
     watch_for_spam = BooleanField(default=False)
     watch_length = BooleanField(default=True)
     prevent_flooding = BooleanField(default=False)
-    delete_messages = BooleanField(default=True)
 
     offenders = ListField()
 
@@ -60,7 +76,7 @@ class TelegramGroup(TimeStampedModel):
         return str(self.chat_id)
 
 class TelegramGroupCaptcha(TimeStampedModel):
-    group = ForeignKey(TelegramGroup, on_delete=CASCADE, related_name="captcha")
+    group_id = CharField(max_length=15, blank=True, null=True)
     user_id = IntegerField(unique=True)
     captcha_code = IntegerField(unique= True)
     expires = DateTimeField(null=True)

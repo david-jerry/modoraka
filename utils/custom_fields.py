@@ -1,62 +1,56 @@
 from django.db import models
 
 class ListField(models.TextField):
-    """Stores a list of IDs as a comma-separated string."""
-    # def __init__(self, *args, **kwargs):
-    #     self.token = kwargs.pop('token', ',')
-    #     super().__init__(*args, **kwargs)
-
-    # def to_python(self, value):
-    #     if not value:
-    #         return []
-    #     return value.split(self.token)
-
-    # def get_prep_value(self, value):
-    #     if not value:
-    #         return
-    #     return self.token.join(map(str, value))
-
-    # def add(self, obj, value):
-    #     """Adds a value to the list, ensuring uniqueness."""
-    #     current_list = getattr(obj, self.attname)
-    #     current_list = set(current_list)  # Convert to set for efficient uniqueness check
-    #     current_list.add(value)
-    #     setattr(obj, self.attname, list(current_list))  # Convert back to list
-
-    # def remove(self, obj, value):
-    #     """Removes a value from the list."""
-    #     current_list = getattr(obj, self.attname)
-    #     current_list = [v for v in current_list if v != value]
-    #     setattr(obj, self.attname, current_list)
-
-
-
+    """Stores a list of strings."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._internal_value = []
-
-    def from_db_value(self, value, expression, connection):
-        if value is None:
-            return []
-        return value.split(',')
 
     def to_python(self, value):
-        if isinstance(value, list):
-            return value
-        elif isinstance(value, str):
-            return value.split(',')
-        return []
+        if not value:
+            return []
+        return [item.strip() for item in value.split(',')]
 
     def get_prep_value(self, value):
-        return ','.join(str(id) for id in value)
+        if not value:
+            return ''
+        return value
 
-    def add(self, instance, id_to_add):
-        if id_to_add not in self._internal_value:
-            self._internal_value.append(id_to_add)
-            setattr(instance, self.attname, self.get_prep_value(self._internal_value))
+    # def add(self, instance, word_to_add):
+    #     current_words = getattr(instance, self.attname)
+    #     if word_to_add.strip() not in current_words:
+    #         current_words.append(word_to_add.strip())
+    #         setattr(instance, self.attname, current_words)
 
-    def remove(self, instance, id_to_remove):
-        if id_to_remove in self._internal_value:
-            self._internal_value.remove(id_to_remove)
-            setattr(instance, self.attname, self.get_prep_value(self._internal_value))
+    # def remove(self, instance, word_to_remove):
+    #     current_words = getattr(instance, self.attname)
+    #     updated_words = [word.strip() for word in current_words if word.strip() != word_to_remove.strip()]
+    #     setattr(instance, self.attname, updated_words)
+
+# class ListField(models.TextField):
+#     """Stores a list of IDs as a comma-separated string."""
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+
+#     def to_python(self, value):
+#         if not value:
+#             return []
+#         return [item.strip() for item in value.split(',')]
+
+#     def get_prep_value(self, value):
+#         if not value:
+#             return ''
+#         return ', '.join(str(item) for item in value)
+
+#     def add(self, instance, word_to_add):
+#         current_words = getattr(instance, self.attname)
+#         if word_to_add.strip() not in current_words:
+#             current_words.append(word_to_add.strip())
+#             setattr(instance, self.attname, self.get_prep_value(current_words))
+
+#     def remove(self, instance, word_to_remove):
+#         current_words = getattr(instance, self.attname)
+#         updated_words = [word.strip() for word in current_words if word.strip() != word_to_remove.strip()]
+#         setattr(instance, self.attname, self.get_prep_value(updated_words))
+
+

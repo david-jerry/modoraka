@@ -1,7 +1,9 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import User, TelegramGroup, GroupPinnedMessages, GroupOffenders, GroupAdmins, TelegramGroupMediaActions
+from .models import BannedWords, User, TelegramGroup, GroupPinnedMessages, GroupOffenders, GroupAdmins, TelegramGroupMediaActions
+
+admin.site.register(BannedWords)
 
 admin.site.register(User)
 

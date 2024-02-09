@@ -2,7 +2,7 @@ import re
 import os
 import django
 
-from apps.users.datas import reset_group_offenders
+from apps.users.datas import get_exception_links, reset_group_offenders
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 django.setup()
@@ -47,24 +47,33 @@ class GroupBotFilters:
     def __init__(self):
         pass
 
-    def bot_usernames_exist_filter(self, message) -> bool:
+    async def bot_usernames_exist_filter(self, message, chat_id) -> bool:
         bot_username_regex = r"@\w+(bot|Bot|_bot|_Bot)"  # Adjust regex if needed
+        word_exceptions = await get_exception_links(chat_id)
+
         try:
             return any(
                 re.match(bot_username_regex, username)
                 for entity in message.entities
-                if entity.type == MessageEntity.MENTION or entity.type == MessageEntity.TEXT_MENTION
+                if not username in word_exceptions and (entity.type == MessageEntity.MENTION or entity.type == MessageEntity.TEXT_MENTION)
                 for username in message.text[entity.offset : entity.offset + entity.length]
             )
         except Exception as e:
             LOGGER.debug(str(e))
             return bool(re.search(bot_username_regex, message.text))
 
-    def links_exist_filter(self, message) -> bool:
+    async def links_exist_filter(self, message, chat_id) -> bool:
         link_regex = r"\b(\S+(?:\.com|\.org|\.\w+))\b"  # Match HTTP/HTTPS links and bare URLs
+        link_exceptions = await get_exception_links(chat_id)
 
         try:
-            return bool(re.findall(link_regex, message.text))  # Check for links using regex
+            links_in_message = re.findall(link_regex, message.text)
+
+            # Check if any of the links are exceptions
+            link_exceptions = await get_exception_links(chat_id)
+            if any(not link in link_exceptions for link in links_in_message):
+                return True  # Check for links using regex
+            return False
         except Exception as e:
             LOGGER.debug(str(e))  # Log exception if regex fails
 

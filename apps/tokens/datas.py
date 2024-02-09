@@ -32,7 +32,7 @@ def get_tokens_watched():
     tokens = WatchToken.objects.all()
     for watched in tokens:
         t_dict = {
-            'groups': [group for group in watched.groups],
+            'groups': watched.groups,
             'token': {
                 "token_symbol": watched.token.ticker_symbol,
                 "token_name": watched.token.ticker_name,
@@ -51,11 +51,13 @@ def get_tokens_watched():
 @sync_to_async
 def create_tokens_watched(chat_id, ticker_symbol):
     token = Tokens.objects.get(ticker_symbol=ticker_symbol)
-    watched = WatchToken.objects.get_or_create(token=token)
-    watched.groups.add(chat_id)
-    watched.save(update_fields=['groups'])
+    WatchToken.objects.get_or_create(token=token)
+    watched = WatchToken.objects.get(token=token)
+    if not WatchToken.objects.filter(groups__in=[chat_id]).exists():
+        watched.groups += f"{chat_id}, "
+        watched.save(update_fields=['groups'])
     tokens_dict = {
-        'groups': [group for group in watched.groups],
+        'groups': watched.groups,
         'token': {
             "token_symbol": watched.token.ticker_symbol,
             "token_name": watched.token.ticker_name,
@@ -71,12 +73,33 @@ def create_tokens_watched(chat_id, ticker_symbol):
     return tokens_dict
 
 @sync_to_async
+def get_token_watched(chat_id):
+    if WatchToken.objects.filter(groups__in=[chat_id]).exists():
+        watched = WatchToken.objects.filter(groups__in=[chat_id]).first()
+        tokens_dict = {
+            'groups': watched.groups,
+            'token': {
+                "token_symbol": watched.token.ticker_symbol,
+                "token_name": watched.token.ticker_name,
+                "total_supply": watched.token.total_supply,
+                "token_circulating_supply": watched.token.circulating_supply,
+                "token_usd_price": watched.token.usd_price,
+                "token_address": watched.token.token_address,
+                "token_abi": watched.token.token_abi,
+                "token_router_address": watched.token.token_router_address,
+                "token_router_abi": watched.token.token_router_abi,
+            }
+        }
+        return tokens_dict
+    return None
+
+@sync_to_async
 def get_tokens_watched_by_group(chat_id):
     tokens_dict = []
-    tokens = WatchAddress.objects.filter(groups__in=chat_id)
+    tokens = WatchToken.objects.filter(groups__in=[chat_id])
     for watched in tokens:
         t_dict = {
-            'groups': [group for group in watched.groups],
+            'groups': watched.groups,
             'token': {
                 "token_symbol": watched.token.ticker_symbol,
                 "token_name": watched.token.ticker_name,
